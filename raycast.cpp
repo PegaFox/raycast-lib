@@ -3,8 +3,10 @@
 #include <cmath>
 #include <glm/geometric.hpp>
 #include <glm/fwd.hpp>
+#include <glm/trigonometric.hpp>
+#include <glm/mat2x2.hpp>
 
-#include <pegafox/colliders.hpp>
+#include "collision-lib/line.hpp"
 
 namespace pf 
 {
@@ -255,7 +257,7 @@ namespace pf
     }
   }
 
-  std::vector<RayCastData> RaycastCamera::castRay(glm::vec2 startPos, glm::vec2 rayDir, float startDis, uint startRenderDis) 
+  std::vector<RayCastData> RaycastCamera::castRay(glm::vec2 startPos, glm::vec2 rayDir, float startDis, uint32_t startRenderDis) 
   {
     std::vector<RayCastData> returnValue(1);
 
@@ -290,7 +292,7 @@ namespace pf
       edgeDelta.y = (ray->tileHitPos.y + 1.0 - startPos.y) * tileDelta.y;
     }
 
-    uint tile = startRenderDis;
+    uint32_t tile = startRenderDis;
     for (; !hitWall && tile < renderDistance; tile++) 
     {
       if (edgeDelta.x < edgeDelta.y) 

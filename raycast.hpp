@@ -1,8 +1,8 @@
-#include <vector>
-#include <list>
-
 #ifndef RAYCAST_RENDERER
 #define RAYCAST_RENDERER
+
+#include <vector>
+#include <list>
 
 #include <glm/ext/vector_int2.hpp>
 #include <glm/ext/vector_uint2.hpp>
