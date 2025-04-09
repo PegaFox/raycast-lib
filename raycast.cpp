@@ -82,7 +82,7 @@ namespace pf
       glm::vec2 endDir = front + right;
       for (float y = 1.0f; y > startFloor; y -= step) 
       {
-        dis = (pos.z * 2.0f) / (y/* - (facing + 0.5f) * 2.0f*/);
+        dis = (pos.z * 2.0f) / (y - facing);
 
         /*scanLine[0].color = sfColor(playerTile->fogColor);
         scanLine[1].color = scanLine[0].color;
@@ -110,7 +110,7 @@ namespace pf
       glm::vec2 endDir = front + right;
       for (float y = -1.0f; y < startCeil; y += step) 
       {
-        dis = ((1.0f - pos.z) * 2.0f) / (/*(facing + 0.5f) * 2.0f - */-y);
+        dis = ((1.0f - pos.z) * 2.0f) / (facing - y);
 
         /*scanLine[0].color = sfColor(playerTile->fogColor);
         scanLine[1].color = scanLine[0].color;
