@@ -89,9 +89,11 @@ namespace pf
         scanLine[2].color = scanLine[0].color;
         scanLine[3].color = scanLine[0].color;*/
 
-        if (drawTextureLine)
+        if (drawTextureQuad)
         {
-          drawTextureLine(floorImg, glm::vec2(-1.0f, y), glm::vec2(1.0f, y), glm::vec2(glm::vec2(pos) + startDir*dis)/floorScale, glm::vec2(glm::vec2(pos) + endDir*dis)/floorScale);
+          glm::vec2 startTPos = glm::vec2(glm::vec2(pos) + startDir*dis)/floorScale;
+          glm::vec2 endTPos = glm::vec2(glm::vec2(pos) + endDir*dis)/floorScale;
+          drawTextureQuad(floorImg, glm::vec2(-1.0f, y), glm::vec2(1.0f, y), glm::vec2(1.0f, y-step), glm::vec2(-1.0f, y-step), startTPos, endTPos, endTPos, startTPos);
         }
       }
     }
@@ -117,9 +119,11 @@ namespace pf
         scanLine[2].color = scanLine[0].color;
         scanLine[3].color = scanLine[0].color;*/
     
-        if (drawTextureLine)
+        if (drawTextureQuad)
         {
-          drawTextureLine(ceilingImg, glm::vec2(-1.0f, y), glm::vec2(1.0f, y), glm::vec2(glm::vec2(pos) + startDir*dis)/ceilingScale, glm::vec2(glm::vec2(pos) + endDir*dis)/ceilingScale);
+          glm::vec2 startTPos = glm::vec2(glm::vec2(pos) + startDir*dis)/ceilingScale;
+          glm::vec2 endTPos = glm::vec2(glm::vec2(pos) + endDir*dis)/ceilingScale;
+          drawTextureQuad(ceilingImg, glm::vec2(-1.0f, y), glm::vec2(1.0f, y), glm::vec2(1.0f, y+step), glm::vec2(-1.0f, y+step), startTPos, endTPos, endTPos, startTPos);
         }
       }
     }
@@ -280,7 +284,7 @@ namespace pf
     } else 
     {
       stepDir.x = 1;
-      edgeDelta.x = (ray->tileHitPos.x + 1.0 - startPos.x) * tileDelta.x;
+      edgeDelta.x = (ray->tileHitPos.x + 1.0f - startPos.x) * tileDelta.x;
     }
     if (rayDir.y < 0) 
     {
@@ -289,7 +293,7 @@ namespace pf
     } else 
     {
       stepDir.y = 1;
-      edgeDelta.y = (ray->tileHitPos.y + 1.0 - startPos.y) * tileDelta.y;
+      edgeDelta.y = (ray->tileHitPos.y + 1.0f - startPos.y) * tileDelta.y;
     }
 
     uint32_t tile = startRenderDis;

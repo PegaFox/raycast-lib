@@ -27,7 +27,7 @@ namespace pf
     public:
       void (*drawRect)(const glm::vec4& color, glm::vec2 pos1, glm::vec2 pos2) = nullptr;
       void (*drawTextureRect)(const Texture& tex, glm::vec2 pos1, glm::vec2 pos2, glm::vec2 tPos1, glm::vec2 tPos2) = nullptr;
-      void (*drawTextureLine)(const Texture& tex, glm::vec2 pos1, glm::vec2 pos2, glm::vec2 tPos1, glm::vec2 tPos2) = nullptr;
+      void (*drawTextureQuad)(const Texture& tex, glm::vec2 pos1, glm::vec2 pos2, glm::vec2 pos3, glm::vec2 pos4, glm::vec2 tPos1, glm::vec2 tPos2, glm::vec2 tPos3, glm::vec2 tPos4) = nullptr;
 
       glm::vec3 pos;
 
