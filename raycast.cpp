@@ -60,7 +60,7 @@ namespace pf
   {
     if (skyImg.data && drawTextureRect)
     {
-      drawTextureRect(skyImg, glm::vec2(-1.0f), glm::vec2(1.0f), glm::vec2(std::atan2(-front.y, -front.x)/M_PI - 1.0f, 0.0f), glm::vec2(std::atan2(-front.y, -front.x)/M_PI - 0.5f, 1.0f));
+      drawTextureRect(skyImg, glm::vec2(-1.0f), glm::vec2(1.0f), glm::vec2(std::atan2(-front.y, -front.x)/M_PI - 1.0f, 0.0f), glm::vec2(std::atan2(-front.y, -front.x)/M_PI - 0.5f, 1.0f), 1.0f);
     }
   }
 
@@ -76,13 +76,14 @@ namespace pf
       }
     } else 
     {
-      float dis;
       float step = 2.0f / res.y;
+      float lastDis = (pos.z * 2.0f) / (1.0f+step - facing);
+
       glm::vec2 startDir = front - right;
       glm::vec2 endDir = front + right;
       for (float y = 1.0f; y > startFloor; y -= step) 
       {
-        dis = (pos.z * 2.0f) / (y - facing);
+        float dis = (pos.z * 2.0f) / (y - facing);
 
         /*scanLine[0].color = sfColor(playerTile->fogColor);
         scanLine[1].color = scanLine[0].color;
@@ -91,10 +92,9 @@ namespace pf
 
         if (drawTextureQuad)
         {
-          glm::vec2 startTPos = glm::vec2(glm::vec2(pos) + startDir*dis)/floorScale;
-          glm::vec2 endTPos = glm::vec2(glm::vec2(pos) + endDir*dis)/floorScale;
-          drawTextureQuad(floorImg, glm::vec2(-1.0f, y), glm::vec2(1.0f, y), glm::vec2(1.0f, y-step), glm::vec2(-1.0f, y-step), startTPos, endTPos, endTPos, startTPos);
+          drawTextureQuad(floorImg, glm::vec2(-1.0f, y), glm::vec2(1.0f, y), glm::vec2(1.0f, y-step), glm::vec2(-1.0f, y-step), glm::vec2(glm::vec2(pos) + startDir*lastDis)/floorScale, glm::vec2(glm::vec2(pos) + endDir*lastDis)/floorScale, glm::vec2(glm::vec2(pos) + endDir*dis)/floorScale, glm::vec2(glm::vec2(pos) + startDir*dis)/floorScale, floorColor.a);
         }
+        lastDis = dis;
       }
     }
 
@@ -106,13 +106,13 @@ namespace pf
       }
     } else 
     {
-      float dis;
       float step = 2.0f / res.y;
+      float lastDis = ((1.0f - pos.z) * 2.0f) / (facing + (1.0f-step));
       glm::vec2 startDir = front - right;
       glm::vec2 endDir = front + right;
       for (float y = -1.0f; y < startCeil; y += step) 
       {
-        dis = ((1.0f - pos.z) * 2.0f) / (facing - y);
+        float dis = ((1.0f - pos.z) * 2.0f) / (facing - y);
 
         /*scanLine[0].color = sfColor(playerTile->fogColor);
         scanLine[1].color = scanLine[0].color;
@@ -121,10 +121,9 @@ namespace pf
     
         if (drawTextureQuad)
         {
-          glm::vec2 startTPos = glm::vec2(glm::vec2(pos) + startDir*dis)/ceilingScale;
-          glm::vec2 endTPos = glm::vec2(glm::vec2(pos) + endDir*dis)/ceilingScale;
-          drawTextureQuad(ceilingImg, glm::vec2(-1.0f, y), glm::vec2(1.0f, y), glm::vec2(1.0f, y+step), glm::vec2(-1.0f, y+step), startTPos, endTPos, endTPos, startTPos);
+          drawTextureQuad(ceilingImg, glm::vec2(-1.0f, y), glm::vec2(1.0f, y), glm::vec2(1.0f, y+step), glm::vec2(-1.0f, y+step), glm::vec2(glm::vec2(pos) + startDir*lastDis)/ceilingScale, glm::vec2(glm::vec2(pos) + endDir*lastDis)/ceilingScale, glm::vec2(glm::vec2(pos) + endDir*dis)/ceilingScale, glm::vec2(glm::vec2(pos) + startDir*dis)/ceilingScale, ceilingColor.a);
         }
+        lastDis = dis;
       }
     }
   }
@@ -152,49 +151,16 @@ namespace pf
         scanLine.pos1 = glm::vec2(ray, centerY - halfSize);
         scanLine.pos2 = glm::vec2(ray+lineWidth, centerY + halfSize);
 
+        scanLine.tPos1 = glm::vec2(eyeCast.texCoord, 0.0f);
+        scanLine.tPos2 = glm::vec2(eyeCast.texCoord, 1.0f);
+
         glm::vec2 relHitPos(eyeCast.hitPos.x - (int)eyeCast.hitPos.x, eyeCast.hitPos.y - (int)eyeCast.hitPos.y);
         float dis = glm::distance(glm::vec2(pos.x, pos.y), glm::vec2(eyeCast.hitPos.x, eyeCast.hitPos.y));
-        if (eyeCast.verticalHit) 
-        {
-          if (eyeCast.hitPos.y < pos.y) 
-          {
-            scanLine.color = eyeCast.tileHit->down.color;
-            if (eyeCast.tileHit->down.texture.data) 
-            {
-              scanLine.tex = eyeCast.tileHit->down.texture;
-            }
-          } else 
-          {
-            scanLine.color = eyeCast.tileHit->up.color;
-            if (eyeCast.tileHit->up.texture.data) 
-            {
-              scanLine.tex = eyeCast.tileHit->up.texture;
-            }
-          }
 
-          scanLine.tPos1 = glm::vec2(relHitPos.x, 0.0f);
-          scanLine.tPos2 = glm::vec2(relHitPos.x + 1.0f/scanLine.tex.width, 1.0f);
-        } else 
-        {
-          if (eyeCast.hitPos.x < pos.x) 
-          {
-            scanLine.color = eyeCast.tileHit->right.color;
-            if (eyeCast.tileHit->right.texture.data) 
-            {
-              scanLine.tex = eyeCast.tileHit->right.texture;
-            }
-          } else 
-          {
-            scanLine.color = eyeCast.tileHit->left.color;
-            if (eyeCast.tileHit->left.texture.data) 
-            {
-              scanLine.tex = eyeCast.tileHit->left.texture;
-            }
-          }
-
-          scanLine.tPos1 = glm::vec2(relHitPos.y, 0.0f);
-          scanLine.tPos2 = glm::vec2(relHitPos.y + 1.0f/scanLine.tex.width, 1.0f);
-        }
+        Wall::ColorData* surfaceHit = &eyeCast.tileHit->colorData[eyeCast.surfaceHit];
+        scanLine.color = surfaceHit->color;
+        scanLine.color.a = glm::min(scanLine.color.a, 1.0f - surfaceHit->reflection);
+        scanLine.tex = surfaceHit->texture;
         scanLine.dis = eyeCast.dis;
 
         /*bool pVert = verticalHit;
@@ -267,6 +233,8 @@ namespace pf
 
     RayCastData *ray = &returnValue[0];
 
+    bool continueCasting = false;
+
     ray->tileHitPos = glm::floor(startPos);
 
     glm::vec2 edgeDelta;
@@ -299,12 +267,14 @@ namespace pf
     uint32_t tile = startRenderDis;
     for (; !hitWall && tile < renderDistance; tile++) 
     {
+      bool changedX = false;
       if (edgeDelta.x < edgeDelta.y) 
       {
         ray->hitPos = startPos + rayDir * edgeDelta.x;
         edgeDelta.x += tileDelta.x;
         ray->tileHitPos.x += stepDir.x;
         ray->verticalHit = false;
+        changedX = true;
       } else 
       {
         ray->hitPos = startPos + rayDir * edgeDelta.y;
@@ -320,10 +290,36 @@ namespace pf
         {
           case Wall::Filled:
             hitWall = true;
+            ray->texCoord = ray->hitPos[!ray->verticalHit] - ray->tileHitPos[!ray->verticalHit];
+            if (ray->tileHit->colorData.size() == 1)
+            {
+              ray->surfaceHit = 0;
+            } else
+            {
+              if (ray->verticalHit)
+              {
+                if (rayDir.y > 0.0f)
+                {
+                  ray->surfaceHit = 0;
+                } else
+                {
+                  ray->surfaceHit = 1;
+                }
+              } else
+              {
+                if (rayDir.x > 0.0f)
+                {
+                  ray->surfaceHit = 2;
+                } else
+                {
+                  ray->surfaceHit = 3;
+                }
+              }
+            }
             break;
-          case Wall::Plane: {
-            glm::vec2 wallTestPos(ray->tileHitPos.x,
-                                  ray->tileHitPos.y + ray->tileHit->planeShift);
+          case Wall::Segments: {
+            // orthogonal plane
+            /*glm::vec2 wallTestPos(ray->tileHitPos.x, ray->tileHitPos.y + ray->tileHit->planeShift);
             glm::vec2 hitPoint = pf::lineToLineCollide(
                 startPos, ray->hitPos + rayDir * 100.0f,
                 glm::vec2(wallTestPos.x + 1, wallTestPos.y), wallTestPos);
@@ -331,28 +327,39 @@ namespace pf
             {
               hitWall = true;
               ray->hitPos = hitPoint;
-              edgeDelta.y += tileDelta.y * (rayDir.y > 0.0f ? ray->tileHit->planeShift : 1 - ray->tileHit->planeShift);
+              edgeDelta.y += tileDelta.y * (rayDir.y > 0.0f ? ray->tileHit->planeShift : 1.0f - ray->tileHit->planeShift);
               ray->verticalHit = true;
-            }
-            /*if (ray->verticalHit) 
-            {
-              if (glm::floor(ray->hitPos + rayDir*tileDelta.y*ray->tileHit->planeShift) == glm::floor(ray->hitPos)) 
-              {
-                hitWall = true; ray->hitPos += rayDir*tileDelta.y*ray->tileHit->planeShift; 
-                edgeDelta.y += tileDelta.y*ray->tileHit->planeShift;
-              } else if (glm::ceil(ray->hitPos + rayDir*tileDelta.y*ray->tileHit->planeShift) == glm::ceil(ray->hitPos)) 
-              {
-                hitWall = true;
-                ray->hitPos += rayDir*tileDelta.y*ray->tileHit->planeShift; 
-                edgeDelta.y += tileDelta.y*ray->tileHit->planeShift;
-              }
-            } else 
+            }*/
+
+            // diagonal plane
+            glm::vec2 lineStart(0.25f, 0.25f);
+            glm::vec2 lineEnd(0.25f, 0.75f);
+            glm::vec2 hitPoint = pf::lineToLineCollide(
+                startPos, ray->hitPos + rayDir * 100.0f,
+                glm::vec2(ray->tileHitPos) + lineStart, glm::vec2(ray->tileHitPos) + lineEnd);
+            if (hitPoint == hitPoint) 
             {
               hitWall = true;
-            }*/
+              //if (ray->verticalHit)
+              //{
+                edgeDelta.y += tileDelta.y * (rayDir.y > 0.0f ? (hitPoint.y - ray->tileHitPos.y) : (1.0f - (hitPoint.y - ray->tileHitPos.y)));
+              //} else
+              //{
+                edgeDelta.x += tileDelta.x * (rayDir.x > 0.0f ? (hitPoint.x - ray->tileHitPos.x) : (1.0f - (hitPoint.x - ray->tileHitPos.x)));
+              //}
+              ray->hitPos = hitPoint;
+              if (glm::abs(lineEnd.x-lineStart.x) > glm::abs(lineEnd.y-lineStart.y))
+              {
+                ray->texCoord = ray->hitPos.x - ray->tileHitPos.x;
+              } else
+              {
+                ray->texCoord = ray->hitPos.y - ray->tileHitPos.y;
+              }
+              //ray->verticalHit = true;
+            }
             break;
           }
-          case Wall::Mirror:
+          /*case Wall::Mirror:
             if (ray->verticalHit) 
             {
               stepDir.y = -stepDir.y;
@@ -368,28 +375,17 @@ namespace pf
               startPos.x = -startPos.x;
               rayDir.x = -rayDir.x;
             }
-            break;
+            break;*/
           case Wall::Empty:
             break;
         }
       }
+    }
 
-      if (!hitWall) 
-        {
-        if (edgeDelta.x < edgeDelta.y) 
-        {
-          // ray->hitPos = startPos + rayDir*edgeDelta.x;
-          // edgeDelta.x += tileDelta.x;
-          // ray->tileHitPos.x += stepDir.x;
-          // ray->verticalHit = false;
-        } else 
-        {
-          // ray->hitPos = startPos + rayDir*edgeDelta.y;
-          // edgeDelta.y += tileDelta.y;
-          // ray->tileHitPos.y += stepDir.y;
-          // ray->verticalHit = true;
-        }
-      }
+    if (hitWall && ray->tileHit->colorData[ray->surfaceHit].reflection > 0.0f)
+    {
+      continueCasting = true;
+      rayDir[ray->verticalHit] = -rayDir[ray->verticalHit];
     }
 
     if (ray->verticalHit) 
@@ -407,39 +403,8 @@ namespace pf
       ray->tileHit = nullptr;
     } else 
     {
-      bool continueCasting = false;
-      if (ray->verticalHit) 
-      {
-        if (stepDir.y > 0) 
-        {
-          if (ray->tileHit->up.color.a < 1.0f) 
-          {
-            continueCasting = true;
-          }
-        } else 
-        {
-          if (ray->tileHit->down.color.a < 1.0f) 
-          {
-            continueCasting = true;
-          }
-        }
-      } else 
-      {
-        if (stepDir.x > 0) 
-        {
-          if (ray->tileHit->left.color.a < 1.0f) 
-          {
-            continueCasting = true;
-          }
-        } else 
-        {
-          if (ray->tileHit->right.color.a < 1.0f) 
-          {
-            continueCasting = true;
-          }
-        }
-      }
-
+      continueCasting |= ray->tileHit->colorData[ray->surfaceHit].color.a < 1.0f;
+        
       if (continueCasting) 
       {
         std::vector<RayCastData> childCast = castRay(ray->hitPos + rayDir * 0.01f, rayDir, ray->dis, tile);
@@ -509,7 +474,7 @@ namespace pf
 
       if (drawTextureRect && toDraw.front().tex.data)
       {
-        drawTextureRect(toDraw.front().tex, toDraw.front().pos1, toDraw.front().pos2, toDraw.front().tPos1, toDraw.front().tPos2);
+        drawTextureRect(toDraw.front().tex, toDraw.front().pos1, toDraw.front().pos2, toDraw.front().tPos1, toDraw.front().tPos2, toDraw.front().color.a);
       } else if (drawRect)
       {
         drawRect(toDraw.front().color, toDraw.front().pos1, toDraw.front().pos2);

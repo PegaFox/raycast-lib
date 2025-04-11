@@ -1,6 +1,8 @@
 #ifndef RAYCAST_WALL_HPP
 #define RAYCAST_WALL_HPP
 
+#include <vector>
+#include <glm/ext/vector_float2.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/ext/vector_float4.hpp>
 #include "texture.hpp"
@@ -13,8 +15,21 @@ namespace pf
       enum FillState 
       {
         Empty,
-        Plane,
-        Mirror,
+
+        // Separate lines
+        // Two coords to a line
+        Segments,
+
+        // Line strip
+        // Each coord extends the current shape
+        Strip,
+
+        // Polygon
+        // Like Strip, but the first and last coords are connected
+        Shape,
+
+        // Full block
+        // The simplest and fastest to calculate
         Filled
       } fillState;
   
@@ -25,12 +40,9 @@ namespace pf
         float reflection = 0.0f;
       };
 
-      float planeShift = 0.5f;
+      std::vector<ColorData> colorData;
+      std::vector<glm::vec2> positionData;
   
-      ColorData up;
-      ColorData down;
-      ColorData left;
-      ColorData right;
       // val = minStr + min(dis/maxDis, 1.0f) * (maxStr - minStr)
       glm::vec3 fogColor;
       float fogMinStrength = 0.0f;
