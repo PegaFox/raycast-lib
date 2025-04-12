@@ -317,7 +317,9 @@ namespace pf
               }
             }
             break;
-          case Wall::Segments: {
+          case Wall::Segments:
+          case Wall::Strip:
+          case Wall::Shape: {
             // orthogonal plane
             /*glm::vec2 wallTestPos(ray->tileHitPos.x, ray->tileHitPos.y + ray->tileHit->planeShift);
             glm::vec2 hitPoint = pf::lineToLineCollide(
@@ -331,35 +333,76 @@ namespace pf
               ray->verticalHit = true;
             }*/
 
-            // diagonal plane
-            glm::vec2 lineStart(0.25f, 0.25f);
-            glm::vec2 lineEnd(0.25f, 0.75f);
-            glm::vec2 hitPoint = pf::lineToLineCollide(
-                startPos, ray->hitPos + rayDir * 100.0f,
-                glm::vec2(ray->tileHitPos) + lineStart, glm::vec2(ray->tileHitPos) + lineEnd);
-            if (hitPoint == hitPoint) 
+            glm::vec2 closeHitPoint;
+            float closeTexCoord;
+            float closeDis = INFINITY;
+            for (uint32_t p = ray->tileHit->fillState != Wall::Shape ? 1 : 0; p < ray->tileHit->positionData.size(); p += ray->tileHit->fillState != Wall::Segments ? 1 : 2)
             {
-              hitWall = true;
-              //if (ray->verticalHit)
-              //{
-                edgeDelta.y += tileDelta.y * (rayDir.y > 0.0f ? (hitPoint.y - ray->tileHitPos.y) : (1.0f - (hitPoint.y - ray->tileHitPos.y)));
-              //} else
-              //{
-                edgeDelta.x += tileDelta.x * (rayDir.x > 0.0f ? (hitPoint.x - ray->tileHitPos.x) : (1.0f - (hitPoint.x - ray->tileHitPos.x)));
-              //}
-              ray->hitPos = hitPoint;
-              if (glm::abs(lineEnd.x-lineStart.x) > glm::abs(lineEnd.y-lineStart.y))
+              glm::vec2 pos1;
+              glm::vec2 pos2;
+
+              if (ray->tileHit->fillState != Wall::Shape)
               {
-                ray->texCoord = ray->hitPos.x - ray->tileHitPos.x;
+                pos1 = ray->tileHit->positionData[p-1];
+                pos2 = ray->tileHit->positionData[p];
               } else
               {
-                ray->texCoord = ray->hitPos.y - ray->tileHitPos.y;
+                pos1 = ray->tileHit->positionData[p];
+                pos2 = ray->tileHit->positionData[(p+1) % ray->tileHit->positionData.size()];
               }
+
+              glm::vec2 hitPoint = pf::lineToLineCollide(
+                  startPos, ray->hitPos + rayDir * 100.0f,
+                  glm::vec2(ray->tileHitPos) + pos1, glm::vec2(ray->tileHitPos) + pos2);
+              if (hitPoint == hitPoint)
+              {
+                float dis;
+                if (ray->verticalHit)
+                {
+                  dis = tileDelta.y * (rayDir.y > 0.0f ? (hitPoint.y - ray->tileHitPos.y) : (1.0f - (hitPoint.y - ray->tileHitPos.y)));
+                } else
+                {
+                  dis = tileDelta.x * (rayDir.x > 0.0f ? (hitPoint.x - ray->tileHitPos.x) : (1.0f - (hitPoint.x - ray->tileHitPos.x)));
+                }
+
+                float texCoord;
+                if (glm::abs(pos2.x-pos1.x) > glm::abs(pos2.y-pos1.y))
+                {
+                  texCoord = hitPoint.x - ray->tileHitPos.x;
+                } else
+                {
+                  texCoord = hitPoint.y - ray->tileHitPos.y;
+                }
+
+                if (dis < closeDis)
+                {
+                  closeDis = dis;
+                  closeTexCoord = texCoord;
+                  closeHitPoint = hitPoint;
+                }
+              }
+            }
+
+            if (closeDis != INFINITY) 
+            {
+              hitWall = true;
+
+              if (ray->verticalHit)
+              {
+                edgeDelta.y += closeDis;
+              } else
+              {
+                edgeDelta.x += closeDis;
+              }
+
+              ray->hitPos = closeHitPoint;
+
+              ray->texCoord = closeTexCoord;
+              
               //ray->verticalHit = true;
             }
             break;
-          }
-          /*case Wall::Mirror:
+          } /*case Wall::Mirror:
             if (ray->verticalHit) 
             {
               stepDir.y = -stepDir.y;
